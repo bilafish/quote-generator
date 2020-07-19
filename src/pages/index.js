@@ -1,22 +1,51 @@
-import React from "react"
-import { Link } from "gatsby"
-
+import React, { useState, useEffect } from "react"
 import Layout from "../components/layout"
-import Image from "../components/image"
+import { faQuoteLeft } from "@fortawesome/free-solid-svg-icons"
+import { faTwitter } from "@fortawesome/free-brands-svg-icons"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import SEO from "../components/seo"
 
-const IndexPage = () => (
-  <Layout>
-    <SEO title="Home" />
-    <h1>Hi people</h1>
-    <p>Welcome to your new Gatsby site.</p>
-    <p>Now go build something great.</p>
-    <div style={{ maxWidth: `300px`, marginBottom: `1.45rem` }}>
-      <Image />
-    </div>
-    <Link to="/page-2/">Go to page 2</Link> <br />
-    <Link to="/using-typescript/">Go to "Using TypeScript"</Link>
-  </Layout>
-)
+const getQuote = async () => {
+  const proxyUrl = "https://cors-anywhere.herokuapp.com/"
+  const apiUrl =
+    "http://api.forismatic.com/api/1.0/?method=getQuote&lang=en&format=json"
+  try {
+    const response = await fetch(proxyUrl + apiUrl)
+    const data = await response.json()
+    return data
+  } catch (error) {
+    getQuote()
+    console.log("Error fetching quote", error)
+  }
+}
+
+const IndexPage = () => {
+  // Component States
+  const [quoteData, setQuoteData] = useState(null)
+
+  useEffect(() => {
+    getQuote().then(data => setQuoteData(data))
+  }, [])
+  return (
+    <Layout>
+      <SEO title="Home" />
+      <div className="quote-container" id="quote-container">
+        <div className="quote-text">
+          <FontAwesomeIcon icon={faQuoteLeft} />
+          <span id="quote">{quoteData && quoteData.quoteText}</span>
+        </div>
+        <div className="quote-author">
+          <span id="author">{quoteData && quoteData.quoteAuthor}</span>
+        </div>
+        <div className="button-container">
+          <button className="twitter-button" id="twitter" title="Tweet This!">
+            <FontAwesomeIcon icon={faTwitter} />
+          </button>
+          <button id="new-quote">New Quote</button>
+        </div>
+      </div>
+    </Layout>
+  )
+}
 
 export default IndexPage
