@@ -19,9 +19,17 @@ const getQuote = async () => {
   }
 }
 
+const tweetQuote = data => {
+  const quoteText = data.quoteText
+  const quoteAuthor = data.quoteAuthor
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${quoteText} - ${quoteAuthor}`
+  window.open(twitterUrl, "_blank")
+}
+
 const IndexPage = () => {
   // Component States
   const [quoteData, setQuoteData] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     getQuote().then(data => setQuoteData(data))
@@ -32,16 +40,54 @@ const IndexPage = () => {
       <div className="quote-container" id="quote-container">
         <div className="quote-text">
           <FontAwesomeIcon icon={faQuoteLeft} />
-          <span id="quote">{quoteData && quoteData.quoteText}</span>
+          <span
+            id="quote"
+            className={
+              quoteData && quoteData.quoteText.length > 120
+                ? "long-quote"
+                : null
+            }
+          >
+            {quoteData && quoteData.quoteText}
+          </span>
         </div>
         <div className="quote-author">
-          <span id="author">{quoteData && quoteData.quoteAuthor}</span>
+          <span id="author">
+            {quoteData &&
+              (quoteData.quoteAuthor === ""
+                ? "Unknown"
+                : quoteData.quoteAuthor)}
+          </span>
         </div>
         <div className="button-container">
-          <button className="twitter-button" id="twitter" title="Tweet This!">
+          <button
+            className="twitter-button"
+            id="twitter"
+            title="Tweet This!"
+            onClick={() => {
+              tweetQuote(quoteData)
+            }}
+          >
             <FontAwesomeIcon icon={faTwitter} />
           </button>
-          <button id="new-quote">New Quote</button>
+          <button
+            id="new-quote"
+            onClick={() => {
+              setIsLoading(true)
+              getQuote().then(data => {
+                setQuoteData(data)
+                setIsLoading(false)
+              })
+            }}
+          >
+            {isLoading ? (
+              <div className="bouncingLoader">
+                <div></div>
+              </div>
+            ) : (
+              "New Quote"
+            )}
+          </button>
         </div>
       </div>
     </Layout>
