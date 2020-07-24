@@ -5,17 +5,20 @@ import { faTwitter } from "@fortawesome/free-brands-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import SEO from "../components/seo"
 
-const getQuote = async () => {
+const getQuote = async counter => {
   const proxyUrl = "https://cors-anywhere.herokuapp.com/"
   const apiUrl =
     "http://api.forismatic.com/api/1.0/?method=getQuote&lang=en&format=json"
   try {
+    counter += 1
     const response = await fetch(proxyUrl + apiUrl)
     const data = await response.json()
     return data
   } catch (error) {
-    getQuote()
     console.log("Error fetching quote", error)
+    if (counter <= 5) {
+      getQuote()
+    }
   }
 }
 
@@ -29,67 +32,73 @@ const tweetQuote = data => {
 const IndexPage = () => {
   // Component States
   const [quoteData, setQuoteData] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    getQuote().then(data => setQuoteData(data))
+    let reqCounter = 0
+    getQuote(reqCounter).then(data => {
+      setQuoteData(data)
+      setIsLoading(false)
+    })
   }, [])
   return (
     <Layout>
       <SEO title="Home" />
-      <div className="quote-container" id="quote-container">
-        <div className="quote-text">
-          <FontAwesomeIcon icon={faQuoteLeft} />
-          <span
-            id="quote"
-            className={
-              quoteData && quoteData.quoteText.length > 120
-                ? "long-quote"
-                : null
-            }
-          >
-            {quoteData && quoteData.quoteText}
-          </span>
+      {isLoading && (
+        <div className="bouncingLoader">
+          <div></div>
         </div>
-        <div className="quote-author">
-          <span id="author">
-            {quoteData &&
-              (quoteData.quoteAuthor === ""
-                ? "Unknown"
-                : quoteData.quoteAuthor)}
-          </span>
+      )}
+      {!isLoading && (
+        <div className="quote-container" id="quote-container">
+          <div className="quote-text">
+            <FontAwesomeIcon icon={faQuoteLeft} />
+            <span
+              id="quote"
+              className={
+                quoteData && quoteData.quoteText.length > 120
+                  ? "long-quote"
+                  : null
+              }
+            >
+              {quoteData && quoteData.quoteText}
+            </span>
+          </div>
+          <div className="quote-author">
+            <span id="author">
+              {quoteData &&
+                (quoteData.quoteAuthor === ""
+                  ? "Unknown"
+                  : quoteData.quoteAuthor)}
+            </span>
+          </div>
+          <div className="button-container">
+            <button
+              className="twitter-button"
+              id="twitter"
+              title="Tweet This!"
+              onClick={() => {
+                tweetQuote(quoteData)
+              }}
+            >
+              <FontAwesomeIcon icon={faTwitter} />
+            </button>
+            <button
+              id="new-quote"
+              onClick={() => {
+                setIsLoading(true)
+                let reqCounter = 0
+                getQuote(reqCounter).then(data => {
+                  setQuoteData(data)
+                  setIsLoading(false)
+                })
+              }}
+            >
+              New Quote
+            </button>
+          </div>
         </div>
-        <div className="button-container">
-          <button
-            className="twitter-button"
-            id="twitter"
-            title="Tweet This!"
-            onClick={() => {
-              tweetQuote(quoteData)
-            }}
-          >
-            <FontAwesomeIcon icon={faTwitter} />
-          </button>
-          <button
-            id="new-quote"
-            onClick={() => {
-              setIsLoading(true)
-              getQuote().then(data => {
-                setQuoteData(data)
-                setIsLoading(false)
-              })
-            }}
-          >
-            {isLoading ? (
-              <div className="bouncingLoader">
-                <div></div>
-              </div>
-            ) : (
-              "New Quote"
-            )}
-          </button>
-        </div>
-      </div>
+      )}
     </Layout>
   )
 }
